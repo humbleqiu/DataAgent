@@ -1,14 +1,12 @@
 package com.alibaba.cloud.ai.controller;
 
 
-import com.alibaba.cloud.ai.dataagent.controller.GraphController;
 import com.alibaba.cloud.ai.dataagent.dto.GraphRequest;
 import com.alibaba.cloud.ai.dataagent.service.graph.GraphService;
 import com.alibaba.cloud.ai.dataagent.vo.GraphNodeResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +17,7 @@ import reactor.core.publisher.Sinks;
 @RequestMapping("/test")
 @RequiredArgsConstructor
 @Slf4j
-public class Testcontrller {
+public class TestContrller {
 
     private final GraphService graphService;
 
