@@ -273,6 +273,10 @@ public class GraphServiceImpl implements GraphService {
 		}
 		String node = output.node();
 		String chunk = output.chunk();
+
+		if (org.apache.commons.lang3.StringUtils.isEmpty(chunk)){
+			return;
+		}
 		log.debug("Received Stream output: {}", chunk);
 		// 如果是文本标记符号，则更新文本类型
 		TextType originType = context.getTextType();
