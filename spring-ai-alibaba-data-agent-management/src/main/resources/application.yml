@@ -21,10 +21,9 @@ spring:
     vectorstore:
       type: milvus
       milvus:
-        database-name: MyAgent
+        database-name: default
         client:
-
-          host: 192.168.232.128
+          host: 192.168.100.218
 
     mcp:
       server:
@@ -43,12 +42,18 @@ spring:
     #        enabled: false
     #        options:
     #          model: qwen3-rerank
-    zhipuai:
-      api-key: 83f34996de3a45f892d8f619efcade33.rzqfEAbw48hy5705
-      base-url: https://open.bigmodel.cn/api/paas
+#    zhipuai:
+#      api-key: 83f34996de3a45f892d8f619efcade33.rzqfEAbw48hy5705
+#      base-url: https://open.bigmodel.cn/api/paas
+#      chat:
+#        options:
+#          model: glm-4.5-air
+    ollama:
+      base-url: http://192.168.100.210:11434
       chat:
-        options:
-          model: glm-4.5
+        model: qwen2.5:32b
+      embedding:
+        model: qwen2.5:32b
     alibaba:
       data-agent:
         llm-service-type: stream
