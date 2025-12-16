@@ -21,9 +21,9 @@ spring:
     vectorstore:
       type: milvus
       milvus:
-        database-name: default
+        database-name: MyAgent
         client:
-          host: 192.168.100.218
+          host: 192.168.232.128
 
     mcp:
       server:

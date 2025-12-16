@@ -126,10 +126,11 @@ public class SqlExecuteNode implements NodeAction {
 				// 数据执行成功
 				emitter.next(ChatResponseUtil.createResponse("执行SQL完成"));
 				emitter.next(ChatResponseUtil.createResponse("SQL查询结果："));
-				emitter.next(ChatResponseUtil.createPureResponse(TextType.RESULT_SET.getStartSign()));
+				emitter.next(ChatResponseUtil.createPureResponse(TextType.JSON.getStartSign()));
 				emitter.next(ChatResponseUtil.createPureResponse(jsonStr));
-				emitter.next(ChatResponseUtil.createPureResponse(TextType.RESULT_SET.getEndSign()));
+				emitter.next(ChatResponseUtil.createPureResponse(TextType.JSON.getEndSign()));
 
+				emitter.next(ChatResponseUtil.createPureResponse("SQL查询结果完成"));
 				// Update step results with the query output
 				Map<String, String> existingResults = StateUtil.getObjectValue(state, SQL_EXECUTE_NODE_OUTPUT,
 						Map.class, new HashMap<>());

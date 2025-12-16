@@ -33,7 +33,7 @@ public enum TextType {
 
 	MARK_DOWN("```markdown-report", "```/markdown-report"),
 
-	RESULT_SET("```result_set", "```"),
+	RESULT_SET("````result_set`", "```"),
 
 	TEXT(null, null);
 

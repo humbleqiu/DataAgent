@@ -102,7 +102,7 @@ public class Nl2SqlServiceImpl implements Nl2SqlService {
 			prompt.append("2. 提升查询性能\n");
 			prompt.append("3. 确保查询安全性\n");
 			prompt.append("4. 优化可读性\n\n");
-			prompt.append("请只返回优化后的SQL语句，不要包含其他说明。");
+			prompt.append("最后再次强调：请只返回优化后的SQL语句，不要包含其他说明。");
 
 			return llmService.toStringFlux(llmService.callUser(prompt.toString()));
 		}
