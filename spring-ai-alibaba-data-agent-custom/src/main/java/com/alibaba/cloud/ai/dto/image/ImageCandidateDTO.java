@@ -25,4 +25,9 @@ public class ImageCandidateDTO {
      * id
      */
     private Long doc_id;
+
+    /**
+     * 图片地址
+     */
+    private String url;
 }
