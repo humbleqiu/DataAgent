@@ -4,7 +4,13 @@
 
 ## 项目简介
 
-这是一个基于Spring AI Alibaba的自然语言转SQL项目，能让你用自然语言直接查询数据库，不需要写复杂的SQL。
+这是一个基于Spring AI Alibaba Graph的企业级智能数据分析 Agent。它不仅是 Text-to-SQL 转换器，更是一个具备支持 Python 深度分析与报告生成的 AI 虚拟数据分析师。（readme不是最新的，以最新代码为主）
+
+系统采用高度可扩展的架构设计，**全面兼容 OpenAI 接口规范**的对话模型与 Embedding 模型，并支持**灵活挂载任意向量数据库**。无论是私有化部署还是接入主流大模型服务，都能轻松适配，为企业提供灵活、可控的数据洞察服务。
+
+同时，本项目可以支持**发布成MCP服务器**，具体看 本文档mcp章节。
+
+
 
 ## 项目结构
 
@@ -12,20 +18,19 @@
 
 ```
 spring-ai-alibaba-data-agent/
-├── spring-ai-alibaba-data-agent-management    # 管理端（可直接启动的Web应用）
-├── spring-ai-alibaba-data-agent-chat         # 核心功能（不能独立启动，供集成使用）
-└── spring-ai-alibaba-data-agent-common       # 公共代码
+├── data-agent-management    # 管理端（可直接启动的Web应用）
+└── data-agent-frontend>     # 前端代码 
 ```
 
 ## 快速启动
 
-项目进行本地测试是在spring-ai-alibaba-data-agent-management中进行
+项目进行本地测试是在data-agent-management中进行
 
 ### 1. 业务数据库准备
 
 可以在项目仓库获取测试表和数据：
 
-文件在：`spring-ai-alibaba-data-agent-management/src/main/resources/sql`，里面有4个文件：`schema.sql` 和 `data.sql`和`product_shcema.sql`和`product_data.sql`，具体的模拟数据表结构和数据可以参考这两个文件，`product_shcema.sql`和`product_data.sql`，跟功能相关的表结构和数据可以参考`schema.sql`和`data.sql`。
+文件在：`data-agent-management/src/main/resources/sql`，里面有4个文件：`schema.sql` 和 `data.sql`和`product_shcema.sql`和`product_data.sql`，具体的模拟数据表结构和数据可以参考这两个文件，`product_shcema.sql`和`product_data.sql`，跟功能相关的表结构和数据可以参考`schema.sql`和`data.sql`。
 
 将表和数据导入到你的MySQL数据库中。
 
@@ -33,7 +38,7 @@ spring-ai-alibaba-data-agent/
 
 #### 2.1 配置management数据库
 
-在`spring-ai-alibaba-data-agent-management/src/main/resources/application.yml`中配置你的MySQL数据库连接信息。
+在`data-agent-management/src/main/resources/application.yml`中配置你的MySQL数据库连接信息。
 
 > 初始化行为说明：默认开启自动创建表并插入示例数据（`spring.sql.init.mode: always`）。生产环境建议关闭，避免示例数据回填覆盖你的业务数据。
 
@@ -73,24 +78,18 @@ spring:
 
 注意：默认开启时（`mode: always`），`data.sql` 会在每次启动回填示例数据（即使你手动删除了数据）。生产环境请改为 `mode: never`，避免覆盖/复原业务数据。
 
-#### 2.3 配置 API Key
+#### 2.3 配置模型
 
-```yaml
-spring:
-  ai:
-    dashscope:
-      api-key: ${AI_DASHSCOPE_API_KEY}
-      chat:
-        enabled: true
-        options:
-          model: qwen-plus
-      embedding:
-        enabled: true
-        options:
-          model: text-embedding-v4
-```
+**注意，如果你之前是自己用starter引入的聊天模型和嵌入模型的pom依赖，需要自己去掉，也不能自己手动初始化ChatClient和ChatModel以及EmbeddingModel了。**
 
-推荐将API Key配置到环境变量中，并使用`${AI_DASHSCOPE_API_KEY}`引用。
+启动项目，点击模型配置，新增模型填写自己的apikey即可。
+
+
+![add-model.png](img/add-model.png)
+
+注意，如Qwen，OpenAi,Deepseek,Siliconflow(硅基流动) 等兼容Open Ai的厂商不需要更改Completions 路径和Embedding路径。
+
+如果是自己部署的模型，baseurl和completions-path就是完整的chat模型地址，向量模型同理。
 
 #### 2.4 嵌入模型批处理策略配置
 
@@ -102,6 +101,104 @@ spring:
 | spring.ai.alibaba.data-agent.embedding-batch.max-text-count     | 每批次最大文本数量 适用于DashScope等有文本数量限制的API DashScope限制为10 | 10          |
 
 #### 2.5 向量库配置
+
+系统默认使用内存向量库，同时系统提供了对es的混合检索支持。
+
+##### 2.5.1 向量库依赖引入
+
+您可以自行引入你想要的持久化向量库，只需要往ioc容器提供一个org.springframework.ai.vectorstore.VectorStore类型的bean即可。例如直接引入PGvector的starter
+
+```java
+<dependency>
+	<groupId>org.springframework.ai</groupId>
+	<artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
+</dependency>
+```
+
+详细对应的向量库参考文档https://springdoc.cn/spring-ai/api/vectordbs.html
+
+##### 2.5.2 向量库schema设置
+
+以下为es的schema结构，其他向量库如milvus，pg等自行可根据如下的es的结构建立自己的schema.尤其要注意metadata中的每个字段的数据类型。
+
+```json
+{
+  "mappings": {
+    "properties": {
+      "content": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "embedding": {
+        "type": "dense_vector",
+        "dims": 1024,
+        "index": true,
+        "similarity": "cosine",
+        "index_options": {
+          "type": "int8_hnsw",
+          "m": 16,
+          "ef_construction": 100
+        }
+      },
+      "id": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "metadata": {
+        "properties": {
+          "agentId": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "agentKnowledgeId": {
+            "type": "long"
+          },
+          "businessTermId": {
+            "type": "long"
+          },
+          "concreteAgentKnowledgeType": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "vectorType": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+
+
+
 
 | 属性                                                         | 说明                                                         | 默认值    |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | --------- |
@@ -118,47 +215,18 @@ spring:
 | spring.ai.alibaba.data-agent.fusion-strategy | 多路召回结果融合策略 | rrf    |
 |                                          |                      |        |
 
-#### 2.7 替换chat-model、embedding-model和vector-store的实现类
+#### 2.7 替换vector-store的实现类
 
-本项目的`ChatModel`和`EmbeddingModel`默认使用`DashScope`的实现，`VectorStore`默认使用内存向量，你可以替换成其他模型实现。
+本项目`VectorStore`默认使用内存向量，你可以替换成其他模型实现。
 
-在[根pom](./pom.xml)中的`dependencies`中可以替换`ChatModel`，`EmbeddingModel`和`VectorStore`的实现starter，以替换掉项目默认使用的实现：
+在[根pom](./pom.xml)中你可以引入其他`VectorStore`的实现starter，以替换掉项目默认使用的实现。比如你想使用`milvus`你可以这样：
 
 ```xml
     <dependencies>
-        <!-- 在这里可以替换vector-store，chat-model和embedding-model的starter -->
+        <!-- 在这里可以替换vector-storestarter -->
         <!-- 如果不使用默认依赖的话，需要手动配置application.yml -->
-    
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
-            <version>${spring-ai-alibaba.version}</version>
-        </dependency>
-    
+
         <!--            milvus  -->
-        <!--        <dependency>-->
-        <!--            <groupId>org.springframework.ai</groupId>-->
-        <!--            <artifactId>spring-ai-starter-vector-store-milvus</artifactId>-->
-        <!--        </dependency>-->
-    </dependencies>
-```
-
-注意修改`application.yml`，以符合这些starter的需求。
-
-举个例子，如果你需要使用`Milvus`作为向量库，使用DeepSeek的`ChatModel`，使用硅基流动的`EmbeddingModel`，你可以导入以下依赖：
-
-```xml
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-deepseek</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-openai</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-vector-store-milvus</artifactId>
@@ -166,50 +234,15 @@ spring:
     </dependencies>
 ```
 
-然后这么写`application.yml`：
-
-```yaml
-spring:
-  ai:
-    model:
-      chat: deepseek      # 一定要配置此字段，否则会报多个Bean实例的异常
-      embedding: openai
-    deepseek:
-      chat:
-        api-key: ${DEEPSEEK_API_KEY}
-    openai:
-      api-key: ${SILICONFLOW_API_KEY}
-      embedding:
-        api-key: ${SILICONFLOW_API_KEY}
-        base-url: https://api.siliconflow.cn
-        options:
-          model: BAAI/bge-m3
-    vectorstore:
-      milvus:
-        initialize-schema: true
-        client:
-          host: ${MILVUS_HOST:192.168.16.100}
-          port: ${MILVUS_PORT:19530}
-          username: ${MILVUS_USERNAME:root}
-          password: ${MILVUS_PASSWORD}
-        databaseName: ${MILVUS_DATABASE:default}
-        collectionName: ${MILVUS_COLLECTION:vector_store}
-        embeddingDimension: 1536
-        indexType: IVF_FLAT
-        metricType: COSINE
-        id-field-name:
-        content-field-name:
-        metadata-field-name:
-        embedding-field-name:
-```
+注意在`application.yml`中配置相应设置，以符合这些starter的需求。
 
 ### 3. 启动管理端
 
-在`spring-ai-alibaba-data-agent-management`目录下，运行 `DataAgentApplication.java` 类。
+在`data-agent-management`目录下，运行 `DataAgentApplication.java` 类。
 
 ### 4. 启动WEB页面
 
-进入 `spring-ai-alibaba-data-agent-frontend` 目录
+进入 `data-agent-frontend` 目录
 
 #### 4.1 安装依赖
 
@@ -316,7 +349,99 @@ yarn dev
 
 ![show-sql-result.png](img/show-sql-result.png)
 
+
+
+## MCP服务器
+
+1、本项目是通过Mcp server Boot Starter实现mcp服务器的，因此更多详细配置可以参考文档
+
+https://springdoc.cn/spring-ai/api/mcp/mcp-server-boot-starter-docs.html#_%E9%85%8D%E7%BD%AE%E5%B1%9E%E6%80%A7
+
+默认mcp  Web 传输的自定义 SSE 端点路径： 项目地址:项目端口/sse 。例如 http://localhost:8065/sse
+
+你也可通过`spring.ai.mcp.server.sse-endpoint` 修改为其他路径，具体看上面提到的mcp参考文档。
+
+2、目前提供的mcp工具如下
+
+```json
+{
+  "tools": [
+    {
+      "name": "nl2SqlToolCallback",
+      "description": "将自然语言查询转换为SQL语句。使用指定的智能体将用户的自然语言查询描述转换为可执行的SQL语句，支持复杂的数据查询需求。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "nl2SqlRequest": {
+            "type": "object",
+            "properties": {
+              "agentId": {
+                "type": "string",
+                "description": "智能体ID，用于指定使用哪个智能体进行NL2SQL转换"
+              },
+              "naturalQuery": {
+                "type": "string",
+                "description": "自然语言查询描述，例如：'查询销售额最高的10个产品'"
+              }
+            },
+            "required": [
+              "agentId",
+              "naturalQuery"
+            ]
+          }
+        },
+        "required": [
+          "nl2SqlRequest"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "listAgentsToolCallback",
+      "description": "查询智能体列表，支持按状态和关键词过滤。可以根据智能体的状态（如已发布PUBLISHED、草稿DRAFT等）进行过滤，也可以通过关键词搜索智能体的名称、描述或标签。返回按创建时间降序排列的智能体列表。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "agentListRequest": {
+            "type": "object",
+            "properties": {
+              "keyword": {
+                "type": "string",
+                "description": "按关键词搜索智能体名称或描述"
+              },
+              "status": {
+                "type": "string",
+                "description": "按状态过滤，例如 '状态：draft-待发布，published-已发布，offline-已下线"
+              }
+            },
+            "required": [
+              "keyword",
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "agentListRequest"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
+```
+
+
+
+3、如需本地自行调试mcp服务器功能可通过如下命令跳转到调试页面
+
+```typescript
+ npx @modelcontextprotocol/inspector http://localhost:8065/mcp/connection
+```
+
+
+
+
+
 ## 如何贡献
 
 我们欢迎社区的贡献！如果你想为本项目做出贡献，请查看我们的[贡献指南](./CONTRIBUTING-zh.md)。
-
