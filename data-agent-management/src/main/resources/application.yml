@@ -22,8 +22,10 @@ spring:
       type: milvus
       milvus:
         database-name: MyAgent
+        collection-name: new_vector_store
         client:
           host: 192.168.232.128
+
 
     mcp:
       server:
@@ -32,8 +34,8 @@ spring:
 #        sse-endpoint: /mcp/message
 #        sse:
 #          path: /mcp/message
-    dashscope:
-      api-key: ${AI_DASHSCOPE_API_KEY}
+    ollama:
+      base-url: http://192.168.100.210:11434
       chat:
         model: qwen2.5:32b
       embedding:
