@@ -14,34 +14,23 @@
  * limitations under the License.
  */
 
-package com.alibaba.cloud.ai.dataagent.service.agent;
+package com.alibaba.cloud.ai.dataagent.vo;
 
-import com.alibaba.cloud.ai.dataagent.entity.Agent;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ModelCheckVo {
 
-public interface AgentService {
+	boolean chatModelReady;
 
-	List<Agent> findAll();
+	boolean embeddingModelReady;
 
-	Agent findById(Long id);
-
-	List<Agent> findByStatus(String status);
-
-	List<Agent> search(String keyword);
-
-	Agent save(Agent agent);
-
-	void deleteById(Long id);
-
-	Agent generateApiKey(Long id);
-
-	Agent resetApiKey(Long id);
-
-	Agent deleteApiKey(Long id);
-
-	Agent toggleApiKey(Long id, boolean enabled);
-
-	String getApiKeyMasked(Long id);
+	boolean ready;
 
 }
