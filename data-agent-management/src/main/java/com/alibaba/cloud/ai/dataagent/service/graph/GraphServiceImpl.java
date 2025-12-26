@@ -260,6 +260,15 @@ public class GraphServiceImpl implements GraphService {
 		}
 		String node = output.node();
 		String chunk = output.chunk();
+
+		if (org.apache.commons.lang3.StringUtils.isEmpty(chunk)){
+			return;
+		}
+
+		if (!shouldOutputNode(node)) {
+			return; // 只过滤掉不需要的节点输出
+		}
+
 		log.debug("Received Stream output: {}", chunk);
 
 		if (chunk == null || chunk.isEmpty()) {
@@ -305,6 +314,16 @@ public class GraphServiceImpl implements GraphService {
 				stopStreamProcessing(threadId);
 			}
 		}
+	}
+
+
+	/**
+	 * 判断是否应该输出该节点的内容
+	 */
+	private boolean shouldOutputNode(String nodeName) {
+		// 只输出 ReportGeneratorNode 的内容
+//		return "ReportGeneratorNode".equals(nodeName);
+		return true;
 	}
 
 }
