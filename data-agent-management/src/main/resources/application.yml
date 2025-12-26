@@ -22,7 +22,7 @@ spring:
       type: milvus
       milvus:
         database-name: MyAgent
-        collection-name: new_vector_store
+        collection-name: my_vector_store
         client:
           host: 192.168.232.128
 
@@ -34,12 +34,17 @@ spring:
 #        sse-endpoint: /mcp/message
 #        sse:
 #          path: /mcp/message
-    ollama:
-      base-url: http://192.168.100.210:11434
+#    ollama:
+#      base-url: http://192.168.100.210:11434
+#      chat:
+#        model: qwen2.5:32b
+#      embedding:
+#        model: qwen2.5:32b
+    openai:
       chat:
-        model: qwen2.5:32b
-      embedding:
-        model: qwen2.5:32b
+        base-url: http://192.168.100.210:11434
+        options:
+          model: qwen2.5:32b
     alibaba:
       data-agent:
         llm-service-type: stream
@@ -74,5 +79,7 @@ mybatis:
 # 日志配置
 logging:
   level:
+    com.alibaba.cloud.ai.dataagent.service: debug
+    com.alibaba.cloud.ai.dataagent.workflow.node: debug
     com.alibaba.cloud.ai.mapper: debug
     org.springframework.jdbc: debug
